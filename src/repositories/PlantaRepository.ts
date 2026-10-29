@@ -34,9 +34,7 @@ export const deletePlanta = async (id: number) => {
     });
 };
 
-// funçoes que nao estao presentes no UserRepository
 
-// para solucionar o problema de duas vendas ao mesmo tempo
 export const venderPlanta = async (id: number, quantidade: number) => {
     return await prisma.planta.updateMany({
         where: { id: id, estoque: { gte: quantidade } },
@@ -44,7 +42,6 @@ export const venderPlanta = async (id: number, quantidade: number) => {
     });
 };
 
-  //o Prisma não soma multiplicacoes de colunas, entao a conta é feita no código
 export const calcularValorTotalEstoque = async () => {
     const plantas = await prisma.planta.findMany({
         select: { preco: true, estoque: true },

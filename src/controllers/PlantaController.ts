@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Luminosidade } from "@prisma/client";
+import { Luminosidade, Prisma } from "@prisma/client";
 import * as PlantaRepository from "@repositories/PlantaRepository";
 
 const LUMINOSIDADES = Object.values(Luminosidade);
@@ -28,7 +28,7 @@ const validarPlanta = (dados: any, edicao: boolean): string | null => {
     return "O campo preco deve ser um número inteiro maior que zero (em centavos).";
   }
 
-  if (dados.especie !== undefined && (typeof dados.especie !== "string" || dados.especie.trim() === "")){
+  if (dados.especie !== undefined && (typeof dados.especie !== "string" || dados.especie.trim() === "")) {
     return "O campo especie deve ser um texto não vazio.";
   }
 
@@ -47,7 +47,7 @@ const validarPlanta = (dados: any, edicao: boolean): string | null => {
   if (dados.petFriendly !== undefined && typeof dados.petFriendly !== "boolean") {
     return "O campo petFriendly deve ser true ou false.";
   }
-  
+
   return null;
 };
 
@@ -71,5 +71,77 @@ export const createPlanta = async (req: Request, res: Response) => {
   }
 };
 
+export const readAllPlantas = async (req: Request, res: Response) => {
+  try {
+    const { luminosidade, petFriendly } = req.query;
+    const filtros: Prisma.PlantaWhereInput = {};
 
+    if (luminosidade !== undefined) {
+      if (!LUMINOSIDADES.includes(luminosidade as Luminosidade)) {
+        return res.status(400).json({
+          message: `O filtro luminosidade deve ser um destes valores: ${LUMINOSIDADES.join(", ")}.`,
+        });
+      }
+      filtros.luminosidade = luminosidade as Luminosidade;
+    }
 
+    if (petFriendly !== undefined) {
+      if (petFriendly !== "true" && petFriendly !== "false") {
+        return res.status(400).json({ message: "O filtro petFriendly deve ser true ou false." });
+      }
+      filtros.petFriendly = petFriendly === "true";
+    }
+
+    const plantas = await PlantaRepository.findAllPlantas(filtros);
+
+    return res.status(200).json(plantas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao listar plantas." });
+  }
+};
+
+export const readPlantaById = async (req: Request, res: Response) => {
+  try {
+    // O id chega da URL como texto, então lerId converte e confere se é um inteiro positivo
+    const id = lerId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ message: "O id deve ser um número inteiro positivo." });
+    }
+
+    const planta = await PlantaRepository.findPlantaById(id);
+
+    // 404 Not Found: o id não existe
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    return res.status(200).json(planta);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao buscar planta." });
+  }
+};
+
+export const deletePlanta = async (req: Request, res: Response) => {
+  try {
+    const id = lerId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ message: "O id deve ser um número inteiro positivo." });
+    }
+
+    const planta = await PlantaRepository.findPlantaById(id);
+
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    await PlantaRepository.deletePlanta(id);
+
+    // 204 No Content: deu certo e não há nada para devolver
+    return res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao deletar planta." });
+  }
+};
