@@ -181,3 +181,46 @@ export const updatePlanta = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Erro ao atualizar planta." });
   }
 };
+
+export const venderPlanta = async (req: Request, res: Response) => {
+  try {
+    const id = lerId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ message: "O id deve ser um número inteiro positivo." });
+    }
+
+    const { quantidade } = req.body;
+    if (!Number.isInteger(quantidade) || quantidade < 1) {
+      return res.status(400).json({ message: "O campo quantidade deve ser um número inteiro maior ou igual a 1." });
+    }
+
+    const planta = await PlantaRepository.findPlantaById(id);
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    // A conferência e a baixa acontecem em uma única operação no banco
+    const resultado = await PlantaRepository.venderPlanta(id, quantidade);
+    if (resultado.count === 0) {
+      return res.status(400).json({ message: "Estoque insuficiente para essa venda." });
+    }
+
+    const plantaAtualizada = await PlantaRepository.findPlantaById(id);
+
+    return res.status(200).json(plantaAtualizada);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao registrar venda." });
+  }
+};
+
+export const readValorTotalEstoque = async (req: Request, res: Response) => {
+  try {
+    const valorTotal = await PlantaRepository.calcularValorTotalEstoque();
+
+    return res.status(200).json(valorTotal);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao calcular o valor do estoque." });
+  }
+};
