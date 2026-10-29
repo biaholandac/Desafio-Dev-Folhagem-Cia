@@ -145,3 +145,39 @@ export const deletePlanta = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Erro ao deletar planta." });
   }
 };
+
+export const updatePlanta = async (req: Request, res: Response) => {
+  try {
+    const id = lerId(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ message: "O id deve ser um número inteiro positivo." });
+    }
+
+    const algumCampo = CAMPOS.some((campo) => req.body[campo] !== undefined);
+    if (!algumCampo) {
+      return res.status(400).json({ message: "Envie pelo menos um campo para editar." });
+    }
+
+    const erro = validarPlanta(req.body, true);
+    if (erro) {
+      return res.status(400).json({ message: erro });
+    }
+
+    const planta = await PlantaRepository.findPlantaById(id);
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    //editar só os campos enviados
+    const { nome, especie, preco, estoque, luminosidade, petFriendly, regaACadaDias } = req.body;
+
+    const plantaAtualizada = await PlantaRepository.updatePlanta(id, {
+      nome, especie, preco, estoque, luminosidade, petFriendly, regaACadaDias,
+    });
+
+    return res.status(200).json(plantaAtualizada);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao atualizar planta." });
+  }
+};
