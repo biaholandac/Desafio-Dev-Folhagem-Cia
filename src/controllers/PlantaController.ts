@@ -168,7 +168,7 @@ export const updatePlanta = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Planta não encontrada." });
     }
 
-    //editar só os campos enviados
+    // editar só os campos enviados
     const { nome, especie, preco, estoque, luminosidade, petFriendly, regaACadaDias } = req.body;
 
     const plantaAtualizada = await PlantaRepository.updatePlanta(id, {

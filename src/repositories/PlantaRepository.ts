@@ -1,8 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@database";
 
-// se baseando no modelo do User, trocar as funcoes de User para Plantas
-
 export const createPlanta = async (data: Prisma.PlantaCreateInput) => {
     return await prisma.planta.create({
         data: data,
@@ -34,7 +32,8 @@ export const deletePlanta = async (id: number) => {
     });
 };
 
-
+// Confere e diminui o estoque numa única operação no banco,
+// para que duas vendas simultâneas nunca deixem o estoque negativo.
 export const venderPlanta = async (id: number, quantidade: number) => {
     return await prisma.planta.updateMany({
         where: { id: id, estoque: { gte: quantidade } },
@@ -42,6 +41,7 @@ export const venderPlanta = async (id: number, quantidade: number) => {
     });
 };
 
+// O Prisma não soma multiplicações de colunas, então a conta é feita no código.
 export const calcularValorTotalEstoque = async () => {
     const plantas = await prisma.planta.findMany({
         select: { preco: true, estoque: true },
