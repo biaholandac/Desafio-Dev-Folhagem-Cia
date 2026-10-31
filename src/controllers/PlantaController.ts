@@ -91,13 +91,24 @@ export const readAllPlantas = async (req: Request, res: Response) => {
       }
       filtros.petFriendly = petFriendly === "true";
     }
-
+    
     const plantas = await PlantaRepository.findAllPlantas(filtros);
 
     return res.status(200).json(plantas);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Erro ao listar plantas." });
+  }
+};
+
+export const readPlantasEsgotadas = async (req: Request, res: Response) => {
+  try {
+    const plantasEsgotadas = await PlantaRepository.findAllPlantas({ estoque: 0 });
+
+    return res.status(200).json(plantasEsgotadas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao listar plantas esgotadas." });
   }
 };
 
