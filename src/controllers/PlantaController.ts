@@ -73,7 +73,7 @@ export const createPlanta = async (req: Request, res: Response) => {
 
 export const readAllPlantas = async (req: Request, res: Response) => {
   try {
-    const { luminosidade, petFriendly, nome } = req.query;
+    const { luminosidade, petFriendly, nome, ordem } = req.query;
     const filtros: Prisma.PlantaWhereInput = {};
 
     if (luminosidade !== undefined) {
@@ -98,8 +98,16 @@ export const readAllPlantas = async (req: Request, res: Response) => {
       }
       filtros.nome = { contains: nome.trim(), mode: "insensitive" };
     }
+
+    let ordenacao: Prisma.PlantaOrderByWithRelationInput | undefined;
+    if (ordem !== undefined) {
+      if (ordem !== "preco" && ordem !== "nome") {
+        return res.status(400).json({ message: "O parâmetro ordem deve ser preco ou nome." });
+      }
+      ordenacao = ordem === "preco" ? { preco: "asc" } : { nome: "asc" };
+    }
     
-    const plantas = await PlantaRepository.findAllPlantas(filtros);
+    const plantas = await PlantaRepository.findAllPlantas(filtros, ordenacao);
 
     return res.status(200).json(plantas);
   } catch (error) {
